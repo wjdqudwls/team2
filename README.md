@@ -55,48 +55,54 @@
 ## 🏛 기획 및 설계 (Design & Architecture)
 
 ### 1. 유스케이스 다이어그램 (Use Case Diagram)
-**`graph LR`** 을 사용하여 표현한 사용자 기능 흐름입니다.
+**`graph TD`** 를 사용하여 팀원들이 구현할 기능의 포함(`<<include>>`) 및 확장(`<<extend>>`) 관계를 표현했습니다.
 
 ```mermaid
-graph LR
-    %% 사용자 Actor (Box 외부에 위치)
-    U[👤 사용자]
+graph TD
+    User((👤 사용자))
 
-    %% 시스템 경계 (System Boundary)
-    subgraph System ["가계부 시스템 (Household Ledger)"]
-        direction TB
-        
-        subgraph Member [회원 관리]
-        UC1(회원가입)
-        UC2(로그인)
-        UC3(내 정보 수정)
-        UC4(회원 탈퇴)
-        end
-
-        subgraph Ledger [가계부 관리]
-        UC5(수입/지출 등록)
-        UC6(내역 조회)
-        UC7(내역 수정/삭제)
-        end
+    subgraph Member [회원 관리 - 윤성원]
+        Join(회원가입)
+        Login(로그인)
+        Update(내 정보 수정)
+        Withdraw(회원 탈퇴)
     end
 
-    %% 관계 연결
-    U --> UC1
-    U --> UC2
-    U --> UC3
-    U --> UC4
-    U --> UC5
-    U --> UC6
-    U --> UC7
-    
-    %% 스타일링
-    style U fill:#fff,stroke:#333,stroke-width:2px,font-size:15px
-    style System fill:#f9f9f9,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
-    style Member fill:#e1f5fe,stroke:#0277bd
-    style Ledger fill:#e8f5e9,stroke:#2e7d32
+    subgraph Ledger [가계부 - 정병진]
+        List(내역 조회)
+        Write(가계부 등록)
+        Edit(수정/삭제)
+        CheckCat(카테고리 확인)
+    end
+
+    subgraph Stats [통계 - 최현지]
+        MonthStats(월별 통계)
+        CatStats(카테고리별 통계)
+    end
+
+    subgraph Notice [알림 - 김태형]
+        Alert(예산 초과 알림)
+    end
+
+    %% 사용자 액션
+    User --> Join
+    User --> Login
+    User --> Update
+    User --> Withdraw
+    User --> List
+    User --> Write
+    User --> Edit
+    User --> MonthStats
+    User --> CatStats
+
+    %% 관계 정의 (Include & Extend)
+    Write -...->|&lt;&lt;include&gt;&gt;| CheckCat
+    Alert -...->|&lt;&lt;extend&gt;&gt;| Write
+    %% 설명: 가계부 등록 시 '카테고리 확인'은 필수(include), '예산 초과 알림'은 조건부 실행(extend)
 ```
 
 ### 2. 데이터베이스 설계 (ERD)
+팀원별 기능 구현에 필요한 테이블 구조입니다. **(1 : N 관계 명시)**
 
 **Q. 왜 공통 코드 PK(`comm_cd`)는 `CHAR(5)`인가요?**
 > 일반적으로 PK는 Auto Increment(`INT`)를 많이 쓰지만, 공통 코드는 성격이 다릅니다.
@@ -111,14 +117,16 @@ erDiagram
         VARCHAR user_id "로그인ID"
         VARCHAR user_pw "비밀번호"
         VARCHAR user_nm "이름"
-        CHAR status_cd "상태"
+        CHAR status_cd "상태 (Y/N)"
         DATETIME reg_dt "가입일"
     }
+    
     COMM_CODE {
         CHAR comm_cd PK "코드 (CHAR 5)"
         CHAR grp_cd "그룹코드"
         VARCHAR comm_nm "코드명"
     }
+    
     LEDGERS {
         INT_UNSIGNED ledger_no PK "내역번호"
         INT_UNSIGNED user_no FK "작성자"
@@ -127,8 +135,18 @@ erDiagram
         DATE trans_dt "거래일"
     }
 
-    USERS ||--o{ LEDGERS : writes
-    COMM_CODE ||--o{ LEDGERS : categorizes
+    NOTICES {
+        INT_UNSIGNED notice_no PK "알림번호"
+        INT_UNSIGNED user_no FK "수신자"
+        VARCHAR message "알림전송내용"
+        CHAR read_yn "읽음여부(Y/N)"
+        DATETIME created_dt "생성일시"
+    }
+
+    %% 관계 설정 (1 : N)
+    USERS ||--o{ LEDGERS : "1 : N (작성)"
+    COMM_CODE ||--o{ LEDGERS : "1 : N (분류)"
+    USERS ||--o{ NOTICES : "1 : N (수신)"
 ```
 ---
 
