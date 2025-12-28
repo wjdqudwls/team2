@@ -139,19 +139,12 @@ erDiagram
         DATE trans_dt "거래일"
     }
 
-    NOTICES {
-        INT_UNSIGNED notice_no PK "알림번호"
-        INT_UNSIGNED user_no FK "수신자"
-        VARCHAR message "알림전송내용"
-        CHAR read_yn "읽음여부(Y/N)"
-        DATETIME created_dt "생성일시"
-    }
 
     %% 관계 설정 (1 : N)
     USERS ||--o{ LEDGERS : "1 : N (작성)"
     COMM_CODE ||--o{ LEDGERS : "1 : N (분류)"
-    USERS ||--o{ NOTICES : "1 : N (수신)"
 ```
+
 ---
 
 ## 👨‍💻 팀원별 작업 가이드 (Work Guide)
@@ -325,6 +318,16 @@ CREATE TABLE ledgers (
     status_cd CHAR(1) DEFAULT 'Y',
     FOREIGN KEY (user_no) REFERENCES users(user_no),
     FOREIGN KEY (comm_cd) REFERENCES comm_code(comm_cd)
+);
+
+-- 4. 알림 테이블 (김태형 담당 기능)
+CREATE TABLE notices (
+    notice_no INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_no INT UNSIGNED NOT NULL,
+    message VARCHAR(255) NOT NULL,
+    read_yn CHAR(1) DEFAULT 'N',
+    created_dt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_no) REFERENCES users(user_no)
 );
 
 -- [중요] 함수 생성
