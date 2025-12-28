@@ -150,7 +150,7 @@ erDiagram
     - `dto/LedgerDTO.java`: 필요 시 필드 추가
     - `controller/LedgerController.java`: 수정(`PUT`), 삭제(`DELETE`) 메서드 완성
     - `service/LedgerService.java`: 본인 확인 로직 등 추가
-    - `mapper/LedgerMapper.xml`: **River Style** 줄바꿈 엄수!
+    - `mapper/LedgerMapper.xml`: **Axis Style** (좌측 정렬) 양식 준수!
 - **참고**: 주석에 적힌 `TODO` 항목들을 하나씩 해결하면 됩니다.
 
 ### 3. **최현지** (통계)
@@ -209,11 +209,21 @@ SELECT fn_get_comm_nm('코드값'); -- 결과: '코드명'
 </select>
 ```
 
-### 3. 네이밍 규칙 (Naming Convention) 준수
-팀원 간 코드 통일성을 위해 아래 규칙을 꼭 지켜주세요.
-- **Java Field**: `camelCase` (예: `userId`, `userNm`)
-- **DB Column**: `snake_case` + 접미사 (예: `user_id`, `user_nm`, `reg_dt`)
-- **API URL**: 소문자 + 하이픈 (예: `/api/v1/user-info`)
+### 4. SQL 작성 규칙 (**Axis Style**)
+가독성을 위해 SQL 작성 시 **Axis Style(축 정렬)**을 준수해주세요.
+- **키워드(SELECT, FROM, WHERE 등)는 우측 정렬**, 내용은 좌측 정렬하여 세로 축을 맞춥니다.
+- 쉼표(`,`)는 **앞쪽**에 배치합니다.
+
+**✅ 올바른 예시:**
+```sql
+SELECT user_no
+     , user_id
+     , user_nm
+  FROM users
+ WHERE status_cd = 'Y'
+   AND user_id   = #{userId}
+```
+
 
 
 ---
