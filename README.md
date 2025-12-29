@@ -1,7 +1,25 @@
-# 📒 Household Ledger (가계부 프로젝트) - Team 2
+# 💰 한푼한푼 (Household Ledger) - Team 2
 
-팀 2의 가계부 관리 프로젝트입니다. Spring Boot와 MyBatis, MariaDB를 기반으로 구축되었습니다.
+**"티끌 모아 태산!"** 💸
+팀 2의 스마트한 가계부 프로젝트 **한푼한푼**입니다.
+Spring Boot 3, MyBatis, MariaDB를 기반으로 구축되었으며, **Glassmorphism** 디자인을 적용하여 사용자 경험을 강화했습니다.
 
+<br>
+
+<details>
+<summary><b>📖 프로젝트 소개 (Project Info)</b></summary>
+<br>
+
+### 📑 목차 (Table of Contents)
+- [👨‍👩‍👦‍👦 팀원 및 역할](#team-members)
+- [🖥 화면 구성 및 담당자](#screens)
+- [🔨 기술 스택](#tech-stack)
+- [📝 요구사항 명세](#requirements)
+- [🏛 기획 및 설계](#design)
+
+---
+
+<a id="team-members"></a>
 ## 👨‍👩‍👦‍👦 팀원 및 역할 (Team Members)
 
 | 이름 | 역할 | 담당 파트 |
@@ -14,6 +32,7 @@
 
 ---
 
+<a id="screens"></a>
 ## 🖥 화면 구성 및 담당자 (Screen Layout & Responsibilities)
 
 ### 1. 메인 화면 (Main Page)
@@ -28,16 +47,19 @@
 
 ---
 
+<a id="tech-stack"></a>
 ##  기술 스택 (Tech Stack)
 
 - **Language**: Java 17
 - **Framework**: Spring Boot 3.5.9
+- **Frontend**: Vue.js 3, Thymeleaf
 - **Persistence**: MyBatis 3.0.5
 - **Database**: MariaDB
 - **Build Tool**: Gradle
 
 ---
 
+<a id="requirements"></a>
 ## 📝 요구사항 명세 (Requirements Specification)
 
 ### 1. 회원 관리 (Member Management)
@@ -64,8 +86,14 @@
 *담당: 정병진*
 - **알림**: 예산 초과 시 알림 로직 설계 및 구현.
 
+### 5. 예산 관리 및 월별 요약 (Budget & Summary)
+*담당: 최현지*
+- **예산 설정**: 월별 총 예산 및 카테고리별 예산 설정.
+- **월별 요약**: 가계부 등록/삭제 시 트리거를 통해 월별 수입/지출 합계 자동 갱신.
+
 ---
 
+<a id="design"></a>
 ## 🏛 기획 및 설계 (Design & Architecture)
 
 ### 1. 유스케이스 다이어그램 (Use Case Diagram)
@@ -104,6 +132,7 @@ graph LR
             direction TB
             MonthStats(월별 통계)
             CatStats(카테고리별 통계)
+            SetBudget(예산 설정)
         end
 
         subgraph Notice [알림 - 정병진]
@@ -121,6 +150,7 @@ graph LR
     User --> Edit
     User --> MonthStats
     User --> CatStats
+    User --> SetBudget
 
     %% 4. 관계 정의 (Include & Extend)
     %% 가계부 등록 -> (포함) -> 카테고리 확인
@@ -177,14 +207,57 @@ erDiagram
         VARCHAR memo "메모/비고"
     }
 
+    BUDGETS {
+        INT_UNSIGNED budget_no PK "예산번호"
+        INT_UNSIGNED user_no FK "사용자"
+        INT target_year "년"
+        INT target_month "월"
+        INT budget_amt "총예산"
+    }
+
+    BUDGET_CATES {
+        INT_UNSIGNED budget_cate_no PK "상세예산번호"
+        INT_UNSIGNED budget_no FK "예산번호"
+        CHAR comm_cd FK "카테고리"
+        INT budget_amt "목표금액"
+    }
+
+    MONTHLY_SUMMARY {
+        INT_UNSIGNED summary_no PK "요약번호"
+        INT_UNSIGNED user_no FK "사용자"
+        INT target_year "년"
+        INT target_month "월"
+        INT total_inc_amt "총수입"
+        INT total_exp_amt "총지출"
+    }
 
     %% 관계 설정 (1 : N)
     USERS ||--o{ LEDGERS : "1 : N (작성)"
     COMM_CODE ||--o{ LEDGERS : "1 : N (분류)"
+    users ||--o{ BUDGETS : "1 : N"
+    BUDGETS ||--o{ BUDGET_CATES : "1 : N"
+    COMM_CODE ||--o{ BUDGET_CATES : "1 : N"
+    users ||--o{ MONTHLY_SUMMARY : "1 : N"
 ```
+
+</details>
+
+<br>
+
+<details>
+<summary><b>🛠 개발 가이드 (Dev Guide)</b></summary>
+<br>
+
+### 📑 목차 (Table of Contents)
+- [👨‍💻 팀원별 작업 가이드](#work-guide)
+- [🎨 UI 연동 가이드](#ui-guide)
+- [🚀 개발 가이드](#dev-guide)
+- [🐙 GitHub 협업 가이드](#git-workflow)
+- [📜 설치 및 실행](#setup)
 
 ---
 
+<a id="work-guide"></a>
 ## 👨‍💻 팀원별 작업 가이드 (Work Guide)
 팀장(정진호)이 **기본 스켈레톤(Skeleton)** 코드를 모두 생성해두었습니다.
 각 담당자는 본인의 패키지 내 파일만 수정하면 됩니다. **다른 사람의 코드는 건드리지 마세요!**
@@ -222,10 +295,9 @@ erDiagram
     - `controller/NoticeController.java`: 알림 API 구현
 - **참고**: `NoticeService.sendNotice()` 메서드는 다른 팀원이 호출해서 쓸 수 있게 설계하세요.
 
-
-
 ---
 
+<a id="ui-guide"></a>
 ## 🎨 UI 연동 가이드 (Frontend Integration Guide)
 **팀장(정진호)**이 만들어둔 메인 화면(`main.html`)의 모달창과 본인의 기능을 연결하는 방법입니다.
 화면 코드는 `src/main/resources/templates/main.html`에 모두 모여 있습니다.
@@ -261,8 +333,9 @@ erDiagram
 - **디자인 유지**: `class="glass-card"`, `class="btn-primary"` 등 디자인 클래스는 **지우지 마세요.**
 - **Vue.js**: 화면의 열고 닫힘은 Vue.js가 담당합니다. 로직이 꼬이지 않게 **스크립트 부분 수정 시 주의**하세요.
 
+---
 
-
+<a id="dev-guide"></a>
 ## 🚀 개발 가이드 (Development Guide)
 
 ### 1. DB 연결 및 초기화
@@ -315,10 +388,26 @@ SELECT user_no
    AND user_id   = #{userId}
 ```
 
+### 5. 통계/예산 쿼리 가이드 (Stats & Budget Reference)
+**최현지(통계)** 님은 아래 방향성을 참고하여 스스로 쿼리를 작성해보세요.
 
+**1. 이번 달 현황 조회 (Hint)**
+- **목표**: 특정 연/월의 총 수입과 총 지출을 가져오기.
+- **테이블**: `monthly_summary`
+- **방법**: `user_no`, `target_year`, `target_month`가 일치하는 행을 조회하면 `total_inc_amt`(수입), `total_exp_amt`(지출) 컬럼에 이미 합산된 값이 들어있습니다. (별도 `SUM` 불필요)
+
+**2. 예산 대비 지출 확인 (Hint)**
+- **목표**: 설정한 예산에서 현재까지의 지출을 빼서 '남은 돈' 계산하기.
+- **테이블**: `budgets` (기준), `monthly_summary` (참조)
+- **방법**:
+    1.  `budgets` 테이블을 메인으로 잡고 `monthly_summary`를 **LEFT JOIN** 하세요. (예산은 있는데 지출이 '0'원인 경우도 있으니까요!)
+    2.  `target_year`와 `target_month`가 서로 일치해야 합니다.
+    3.  **잔액 계산**: `budget_amt` - `total_exp_amt`
+    4.  ⚠️ **주의**: 지출 내역이 아예 없으면 `monthly_summary` 쪽이 `NULL`이 될 수 있습니다. `IFNULL` 또는 `COALESCE` 함수로 0원 처리를 꼭 해주세요.
 
 ---
 
+<a id="git-workflow"></a>
 ## 🐙 GitHub 협업 가이드 (Git Workflow)
 **⚠️ 직접 `Push` 권한이 없으므로 'Fork & Pull Request' 방식을 사용합니다.**
 원본 저장소(`main`)를 보호하기 위함이며, 아래 절차를 반드시 따라주세요.
@@ -353,9 +442,9 @@ git push origin feature/yoon-join
     - Base: `fdrn9999/team2` (`main`) ⬅️ Head: `{본인아이디}/team2` (`feature/...`)
 4.  **팀장(정진호)**에게 승인(`Approve`)을 받아야 Merge 됩니다.
 
-
 ---
 
+<a id="setup"></a>
 ## 📜 설치 및 실행 (Setup)
 
 ### 1. DB 초기화 (SQL 실행)
@@ -366,50 +455,179 @@ DROP DATABASE IF EXISTS household_ledger;
 CREATE DATABASE household_ledger;
 USE household_ledger;
 
+-- ============================================
 -- 1. 회원 테이블
+-- ============================================
 CREATE TABLE users (
-    user_no INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    user_id VARCHAR(20) NOT NULL UNIQUE,
-    user_pw VARCHAR(100) NOT NULL,
-    user_nm VARCHAR(30) NOT NULL,
-    status_cd CHAR(1) DEFAULT 'Y' CHECK (status_cd IN ('Y', 'N')),
-    reg_dt DATETIME DEFAULT CURRENT_TIMESTAMP
+    user_no     INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id     VARCHAR(20) NOT NULL UNIQUE,
+    user_pw     VARCHAR(100) NOT NULL,
+    user_nm     VARCHAR(30) NOT NULL,
+    status_cd   CHAR(1) DEFAULT 'Y' CHECK (status_cd IN ('Y', 'N')),
+    reg_dt      DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. 공통 코드 테이블 (CHAR PK 사용 이유: 성능 및 가독성)
+-- ============================================
+-- 2. 공통 코드 테이블
+-- ============================================
 CREATE TABLE comm_code (
-    comm_cd CHAR(5) PRIMARY KEY,
-    grp_cd CHAR(3) NOT NULL,
-    comm_nm VARCHAR(30) NOT NULL,
-    sort_no TINYINT DEFAULT 1
+    comm_cd     CHAR(5) PRIMARY KEY,
+    grp_cd      CHAR(3) NOT NULL,
+    comm_nm     VARCHAR(30) NOT NULL,
+    sort_no     TINYINT DEFAULT 1
 );
 
+-- ============================================
 -- 3. 가계부 테이블
+-- ============================================
 CREATE TABLE ledgers (
-    ledger_no INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    user_no INT UNSIGNED NOT NULL,
-    comm_cd CHAR(5) NOT NULL,
-    amount INT NOT NULL,
-    trans_dt DATE NOT NULL,
-    memo VARCHAR(255), -- (구: description)
-    status_cd CHAR(1) DEFAULT 'Y' CHECK (status_cd IN ('Y', 'N')),
-    FOREIGN KEY (user_no) REFERENCES users(user_no),
-    FOREIGN KEY (comm_cd) REFERENCES comm_code(comm_cd)
+    ledger_no   INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_no     INT UNSIGNED NOT NULL,
+    comm_cd     CHAR(5) NOT NULL,
+    amount      INT NOT NULL,
+    trans_dt    DATE NOT NULL,
+    memo        VARCHAR(255),
+    status_cd   CHAR(1) DEFAULT 'Y' CHECK (status_cd IN ('Y', 'N')),
+
+    FOREIGN KEY (user_no) REFERENCES users (user_no),
+    FOREIGN KEY (comm_cd) REFERENCES comm_code (comm_cd)
 );
 
--- [중요] 함수 생성
+-- ============================================
+-- 4. 월별 예산 테이블
+-- ============================================
+CREATE TABLE budgets (
+    budget_no     INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_no       INT UNSIGNED NOT NULL,
+
+    target_year   INT NOT NULL,
+    target_month  INT NOT NULL,
+
+    budget_amt    INT NOT NULL,
+    reg_dt        DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT uk_budget_user_month UNIQUE (user_no, target_year, target_month),
+    CONSTRAINT fk_budget_user
+        FOREIGN KEY (user_no)
+        REFERENCES users (user_no)
+        ON DELETE CASCADE
+);
+
+-- ============================================
+-- 5. 카테고리별 예산 테이블 (확장용)
+-- ============================================
+CREATE TABLE budget_cates (
+    budget_cate_no INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    budget_no      INT UNSIGNED NOT NULL,
+    comm_cd        CHAR(5) NOT NULL,
+    budget_amt     INT NOT NULL,
+    reg_dt         DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT uk_budget_cate UNIQUE (budget_no, comm_cd),
+    CONSTRAINT fk_budget_cate_budget
+        FOREIGN KEY (budget_no)
+        REFERENCES budgets (budget_no)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_budget_cate_comm
+        FOREIGN KEY (comm_cd)
+        REFERENCES comm_code (comm_cd)
+);
+
+-- ============================================
+-- 6. 월별 요약 테이블 (통계용)
+-- ============================================
+CREATE TABLE monthly_summary (
+    summary_no      INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_no         INT UNSIGNED NOT NULL,
+    target_year     INT NOT NULL,
+    target_month    INT NOT NULL,
+
+    total_inc_amt   INT DEFAULT 0,
+    total_exp_amt   INT DEFAULT 0,
+
+    CONSTRAINT uk_summary_user_month UNIQUE (user_no, target_year, target_month),
+    FOREIGN KEY (user_no) REFERENCES users (user_no)
+);
+
+-- ============================================
+-- [함수] 공통 코드명 조회
+-- ============================================
 DELIMITER $$
-CREATE FUNCTION fn_get_comm_nm(_comm_cd CHAR(5)) RETURNS VARCHAR(30)
+
+CREATE FUNCTION fn_get_comm_nm (_comm_cd CHAR(5))
+RETURNS VARCHAR(30)
 DETERMINISTIC
 BEGIN
     DECLARE _comm_nm VARCHAR(30);
-    SELECT comm_nm INTO _comm_nm FROM comm_code WHERE comm_cd = _comm_cd;
+
+    SELECT comm_nm
+      INTO _comm_nm
+      FROM comm_code
+     WHERE comm_cd = _comm_cd;
+
     RETURN IFNULL(_comm_nm, '');
-END $$
+END$$
+
 DELIMITER ;
 
+-- ============================================
+-- [트리거] 가계부 INSERT → 월별 요약 반영
+-- ============================================
+DELIMITER $$
+
+CREATE TRIGGER trg_ledger_after_insert
+AFTER INSERT ON ledgers
+FOR EACH ROW
+BEGIN
+    IF NEW.comm_cd LIKE 'EXP%' THEN
+        INSERT INTO monthly_summary (user_no, target_year, target_month, total_exp_amt)
+        VALUES (NEW.user_no, YEAR(NEW.trans_dt), MONTH(NEW.trans_dt), NEW.amount)
+        ON DUPLICATE KEY UPDATE
+            total_exp_amt = total_exp_amt + NEW.amount;
+    ELSE
+        INSERT INTO monthly_summary (user_no, target_year, target_month, total_inc_amt)
+        VALUES (NEW.user_no, YEAR(NEW.trans_dt), MONTH(NEW.trans_dt), NEW.amount)
+        ON DUPLICATE KEY UPDATE
+            total_inc_amt = total_inc_amt + NEW.amount;
+    END IF;
+END$$
+
+DELIMITER ;
+
+-- ============================================
+-- [트리거] 가계부 DELETE → 월별 요약 차감
+-- ============================================
+DELIMITER $$
+
+CREATE TRIGGER trg_ledger_after_delete
+AFTER DELETE ON ledgers
+FOR EACH ROW
+BEGIN
+    IF OLD.comm_cd LIKE 'EXP%' THEN
+        UPDATE monthly_summary
+           SET total_exp_amt = total_exp_amt - OLD.amount
+         WHERE user_no = OLD.user_no
+           AND target_year = YEAR(OLD.trans_dt)
+           AND target_month = MONTH(OLD.trans_dt);
+    ELSE
+        UPDATE monthly_summary
+           SET total_inc_amt = total_inc_amt - OLD.amount
+         WHERE user_no = OLD.user_no
+           AND target_year = YEAR(OLD.trans_dt)
+           AND target_month = MONTH(OLD.trans_dt);
+    END IF;
+END$$
+
+DELIMITER ;
+
+-- ============================================
 -- 기초 데이터
+-- ============================================
 INSERT INTO comm_code VALUES ('INC01', 'INC', '월급', 1);
 INSERT INTO comm_code VALUES ('EXP01', 'EXP', '식비', 1);
-INSERT INTO users (user_id, user_pw, user_nm) VALUES ('test', '1234', '정진호');
+INSERT INTO comm_code VALUES ('EXP02', 'EXP', '교통비', 2);
+
+INSERT INTO users (user_id, user_pw, user_nm)
+VALUES ('test', '1234', '정진호');
 ```
+</details>
