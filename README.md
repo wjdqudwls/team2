@@ -48,11 +48,11 @@
 
 ### 3.1 유스케이스 (Use Case)
 
-사용자(학생)가 시스템을 통해 어떤 기능을 수행할 수 있는지 보여주는 다이어그램입니다.
+개발자가 시스템을 통해 어떤 기능을 수행할 수 있는지 보여주는 다이어그램입니다.
 
 ```mermaid
 usecaseDiagram
-    actor "User (Learner)" as U
+    actor "Developer" as U
     package "DB Buddy System" {
         usecase "테이블 목록 조회" as UC1
         usecase "테이블 상세(컬럼) 확인" as UC2
