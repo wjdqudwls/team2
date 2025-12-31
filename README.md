@@ -1,4 +1,18 @@
-# 📌 프로젝트 소개 (Project Introduction)
+# 목차 (Table of Contents)
+1. [프로젝트 소개](#-프로젝트-소개-project-introduction)
+    - [1️⃣ 프로젝트 개요](#1️⃣-프로젝트-개요)
+    - [2️⃣ 팀원 구성](#2️⃣-팀원-구성-team-composition)
+    - [🛠️ 개발 환경](#�️-개발-환경-tech-stack)
+2. [기획](#-기획-planning)
+    - [3️⃣ 요구사항 상세](#3️⃣-요구사항-상세-requirements-specification)
+    - [4️⃣ 시스템 설계](#4️⃣-시스템-설계)
+3. [개발자 가이드](#-개발자-가이드-developer-guide)
+    - [5️⃣ 프로젝트 진행 전략](#5️⃣-프로젝트-진행-전략)
+    - [6️⃣ 트러블슈팅](#6️⃣-트러블슈팅-db-연결-문제-해결)
+
+---
+
+# �📌 프로젝트 소개 (Project Introduction)
 
 ## 프로젝트 이름
 **DB Buddy**
@@ -14,11 +28,34 @@
 - **목표**: SQL 문 구조와 DB 동작 원리를 직관적으로 이해
 - **특징**: SQL 직접 입력 X / 안전한 범위 내 CRUD / GUI 기반
 
+## 2️⃣ 팀원 구성 (Team Composition)
+
+| 이름 | 역할 | GitHub | Email |
+|:---:|:---:|:---:|:---:|
+| **정진호** | **팀장** | [fdrn9999](https://github.com/fdrn9999) | [ckato9173@gmail.com](mailto:ckato9173@gmail.com) |
+| **김태형** | 팀원 | [ikth-kim](https://github.com/ikth-kim) | [ikth.kim@gmail.com](mailto:ikth.kim@gmail.com) |
+| **윤성원** | 팀원 | [SungWon180](https://github.com/SungWon180) | [yseongwon851@gmail.com](mailto:yseongwon851@gmail.com) |
+| **정병진** | 팀원 | [wjdqudwls](https://github.com/wjdqudwls) | [wjdqdwls100@gmail.com](mailto:wjdqdwls100@gmail.com) |
+| **최현지** | 팀원 | [choihyeonji00](https://github.com/choihyeonji00) | [as124ff2@gmail.com](mailto:as124ff2@gmail.com) |
+
+## 🛠️ 개발 환경 (Tech Stack)
+
+| 구분 | 상세 내용 |
+|:---:|:---|
+| **OS** | Windows |
+| **Language** | Java 17 |
+| **Framework** | Spring Boot 3.5.9 |
+| **Build** | Gradle |
+| **Database** | MariaDB |
+| **ORM** | MyBatis 3.0.5 |
+| **Frontend** | Thymeleaf, HTML5, CSS3, JavaScript |
+| **Tool** | IntelliJ IDEA |
+
 ---
 
 # 📌 기획 (Planning)
 
-## 2️⃣ 요구사항 상세 (Requirements Specification)
+## 3️⃣ 요구사항 상세 (Requirements Specification)
 
 ### 기능 요구사항 목록
 
@@ -43,7 +80,7 @@
 
 ---
 
-## 3️⃣ 시스템 설계
+## 4️⃣ 시스템 설계
 
 ### 3.1 유스케이스 (Use Case)
 
@@ -138,21 +175,91 @@ erDiagram
     TBL_META ||--|{ TBL_SAMPLE : "contains data for"
 ```
 
+### 테이블 역할 설명
+
+| 테이블 명 | 역할 설명 | 비고 |
+|:---:|:---|:---|
+| **USERS** | **사용자 관리**<br>로그인 및 권한 처리를 위한 사용자 정보를 저장합니다. | 회원가입/로그인 시 사용됨 |
+| **TBL_META** | **테이블 메타 정보**<br>사용자가 생성/관리하는 가상의 '테이블' 자체에 대한 정보(이름, 설명)를 정의합니다. | 시스템이 관리하는 '테이블 목록'의 원천 데이터 |
+| **COL_META** | **컬럼 메타 정보**<br>각 메타 테이블(`TBL_META`)에 속한 컬럼들의 구조(이름, 타입, 제약조건 등)를 정의합니다. | 동적 폼 생성 및 유효성 검사에 활용 |
+| **TBL_SAMPLE** | **실제 데이터 저장소**<br>사용자가 입력한 데이터를 JSON 형태로 유연하게 저장합니다. | **Physical Schema-less 구현**<br>동적인 컬럼 구조를 수용하기 위해 `DATA_JSON`에 Key-Value 형태로 값을 저장함. |
+
+> **💡 설계 의도 (Why JSON?)**
+> 이 프로젝트는 사용자가 정의한 테이블과 컬럼 구조가 수시로 변경될 수 있는 **가상 DBMS환경**입니다.
+> 매번 물리적인 `CREATE TABLE` / `ALTER TABLE`을 수행하는 대신, **메타데이터(`TBL_META`, `COL_META`)로 구조를 정의**하고 **실제 데이터는 `TBL_SAMPLE`의 JSON 컬럼에 유연하게 저장**하는 방식을 채택하여, 안전하고 유연한 스키마 관리를 구현했습니다.
+
+### 3.3 주요 기능 흐름 (Key Feature Flow)
+
+핵심 기능인 **동적 테이블 조회**와 **데이터 저장**이 내부적으로 어떻게 동작하는지 보여주는 흐름도입니다.
+
+#### A. 동적 데이터 조회 (Dynamic Data Retrieval)
+사용자가 테이블을 선택했을 때, 메타데이터와 JSON 데이터를 결합하여 화면을 구성하는 과정입니다.
+
+```mermaid
+sequenceDiagram
+    participant User as 👤 Developer
+    participant Controller as 🎮 SampleController
+    participant Service as ⚙️ SampleService
+    participant DB as 🗄️ Database
+
+    User->>Controller: 1. 테이블 선택 (GET /samples?tblId=1)
+    Controller->>Service: 2. getSamples(tblId)
+    
+    Service->>DB: 3. 컬럼 정보 조회 (SELECT FROM COL_META)
+    DB-->>Service: Return [ID, Name, Email...]
+    
+    Service->>DB: 4. 데이터 조회 (SELECT FROM TBL_SAMPLE)
+    DB-->>Service: Return JSON String '{"ID":1, "Name":"Test"}'
+    
+    Service->>Service: 5. JSON Parsing & Mapping
+    Note over Service: 컬럼 메타정보에 맞춰<br/>JSON 데이터를 Grid로 변환
+    
+    Service-->>Controller: Return SampleDTO List
+    Controller-->>User: 6. HTML Table 렌더링
+```
+
+#### B. 데이터 저장 (JSON Storage)
+사용자가 입력한 Form 데이터가 JSON으로 변환되어 저장되는 과정입니다.
+
+```mermaid
+sequenceDiagram
+    participant User as 👤 Developer
+    participant Controller as 🎮 SampleController
+    participant Service as ⚙️ SampleService
+    participant DB as 🗄️ Database
+
+    User->>Controller: 1. 데이터 입력 (POST /samples/regist)
+    Controller->>Service: 2. regist(tblId, Map<String, Object>)
+    
+    Service->>Service: 3. 유효성 검사 (Validation)
+    Note over Service: COL_META의 타입/제약조건 확인
+    
+    Service->>Service: 4. JSON Serialization
+    Note over Service: Map 데이터를 JSON 문자열로 변환
+    
+    Service->>DB: 5. INSERT INTO TBL_SAMPLE (DATA_JSON)
+    DB-->>Service: Return Success
+    
+    Service-->>Controller: Return redirect:/samples
+    Controller-->>User: 6. 목록 화면 이동
+```
+> **📝 저장되는 JSON 데이터 예시 (Example Data)**
+> 사용자가 '학생' 테이블에 데이터를 입력했을 때, `TBL_SAMPLE`의 `DATA_JSON` 컬럼에는 아래와 같이 저장됩니다.
+> ```json
+> {
+>   "STUDENT_NM": "김철수",
+>   "GRADE": 4,
+>   "MAJOR": "컴퓨터공학",
+>   "IS_ENROLLED": true
+> }
+> ```
+> *`TBL_META`에 정의된 컬럼명(Key)과 사용자 입력값(Value)이 매핑되어 저장됩니다.*
+
 ---
 
 # 📌 개발자 가이드 (Developer Guide)
 
-## 4️⃣ 팀원 역할 (예시)
 
-| 역할 | 담당 |
-|------|------|
-| 팀장(전공자) | 전체 구조 설계, Spring Boot + MyBatis 설정, 통합 테스트 |
-| 팀원1 | DB 테이블/컬럼 정의, 샘플 데이터 삽입 |
-| 팀원2 | 테이블 목록/컬럼 체크 UI, SELECT 문 미리보기 |
-| 팀원3 | Create / Update 폼 구현 |
-| 팀원4 | Delete 기능, SELECT 실행 결과 표시 |
-
-> 참고: 모두 개발자로 참여, 기능 단위로 역할 분담
 
 ---
 
