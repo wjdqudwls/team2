@@ -13,6 +13,8 @@ DROP TABLE IF EXISTS TBL_META;
 
 DROP TABLE IF EXISTS USERS;
 
+DROP TABLE IF EXISTS DATA_TYPES;
+
 -- =========================================
 -- 1. Users Table
 -- =========================================
@@ -28,7 +30,29 @@ CREATE TABLE USERS (
 ) ENGINE = InnoDB COMMENT = '사용자 테이블';
 
 -- =========================================
--- 2. Tables Metadata
+-- 2. Data Types Table (New)
+-- =========================================
+CREATE TABLE DATA_TYPES (
+    TYPE_ID INT AUTO_INCREMENT PRIMARY KEY COMMENT '타입 고유 ID',
+    TYPE_NM VARCHAR(50) NOT NULL UNIQUE COMMENT '데이터 타입 명(INT, VARCHAR 등)',
+    REG_DT TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '등록일자'
+) ENGINE = InnoDB COMMENT = '지원하는 DB 데이터 타입 정의';
+
+-- 초기 데이터 타입 적재
+INSERT INTO
+    DATA_TYPES (TYPE_NM)
+VALUES ('INT'),
+    ('VARCHAR'),
+    ('TEXT'),
+    ('DATE'),
+    ('TIMESTAMP'),
+    ('CHAR'),
+    ('FLOAT'),
+    ('DOUBLE'),
+    ('BOOLEAN');
+
+-- =========================================
+-- 3. Tables Metadata
 -- =========================================
 CREATE TABLE TBL_META (
     TBL_ID INT AUTO_INCREMENT PRIMARY KEY COMMENT '테이블 고유 ID',
@@ -40,18 +64,20 @@ CREATE TABLE TBL_META (
 ) ENGINE = InnoDB COMMENT = '테이블 메타 데이터';
 
 -- =========================================
--- 3. Columns Metadata
+-- 4. Columns Metadata
 -- =========================================
 CREATE TABLE COL_META (
     COL_ID INT AUTO_INCREMENT PRIMARY KEY COMMENT '컬럼 고유 ID',
     TBL_ID INT NOT NULL COMMENT '테이블 ID(FK)',
     COL_NM VARCHAR(50) NOT NULL COMMENT '컬럼 이름',
-    DATA_TYPE VARCHAR(50) NOT NULL COMMENT '데이터 타입',
+    TYPE_ID INT NOT NULL COMMENT '데이터 타입 ID(FK)',
+    TYPE_LENGTH INT DEFAULT 0 COMMENT '데이터 길이 (VARCHAR 등)',
     NULLABLE CHAR(1) DEFAULT 'Y' COMMENT 'NULL 허용 여부 (Y/N)',
     ORDER_NO INT DEFAULT 0 COMMENT '컬럼 순서',
     REG_DT TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '등록일자',
     CONSTRAINT CK_COL_META_NULLABLE CHECK (NULLABLE IN ('Y', 'N')),
-    CONSTRAINT COL_META_FK1 FOREIGN KEY (TBL_ID) REFERENCES TBL_META (TBL_ID) ON DELETE CASCADE
+    CONSTRAINT COL_META_FK1 FOREIGN KEY (TBL_ID) REFERENCES TBL_META (TBL_ID) ON DELETE CASCADE,
+    CONSTRAINT COL_META_FK2 FOREIGN KEY (TYPE_ID) REFERENCES DATA_TYPES (TYPE_ID) ON DELETE RESTRICT
 ) ENGINE = InnoDB COMMENT = '컬럼 메타 데이터';
 
 -- =========================================

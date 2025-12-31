@@ -79,7 +79,7 @@
 | **FR-007** | **스키마** | 컬럼 | 관리 | **컬럼 삭제** | - 특정 컬럼을 메타 정보에서 영구적으로 제외한다.<br>- **[검증]** "이 컬럼을 삭제하면 더 이상 데이터를 볼 수 없습니다. 계속하시겠습니까?" 컨펌 메시지 필수.<br>- **[예외]** PK로 지정된 컬럼은 삭제할 수 없다. |
 | **FR-008** | **데이터** | 조회 | 필터 | **조회 대상 선택** | - Grid에 표시할 컬럼을 체크박스로 선택한다.<br>- **[기능]** '전체 선택/해제' 기능 제공.<br>- **[검증 실패]** 아무 컬럼도 선택하지 않고 조회 시 "최소 하나 이상의 컬럼을 선택해주세요" 경고.<br>- **[결과]** 선택 해제된 컬럼은 `SELECT` 절에서 제외되어 결과 테이블에 렌더링되지 않아야 함. |
 | **FR-009** | **데이터** | 조회 | 실행 | **데이터 조회** | - 선택된 테이블 및 컬럼 조건에 맞춰 데이터를 조회한다.<br>- **[UX]** 데이터가 0건일 경우 "데이터가 존재하지 않습니다" 문구를 테이블 중앙에 표시.<br>- **[성능]** 데이터가 많을 경우 페이징(Pagination) 처리 (한 페이지당 10건/20건). |
-| **FR-010** | **데이터** | 조작 | 추가 | **데이터 추가** | - 동적으로 생성된 입력 폼을 통해 데이터를 저장(INSERT)한다.<br>- **[검증 실패]** `INT` 타입 필드에 문자열 입력 후 저장 시도시 유효성 에러 메시지("숫자만 입력 가능합니다") 출력.<br>- **[검증 실패]** `Not Null` 컬럼을 비워두고 저장 시도시 에러.<br>- **[성공]** 저장 성공 시 목록 화면으로 즉시 리다이렉트되어 추가된 행이 보여야 함. |
+| **FR-010** | **데이터** | 조작 | 추가 | **데이터 추가** | - 동적으로 생성된 입력 폼을 통해 데이터를 저장(INSERT)한다.<br>- **[검증 실패]** `VARCHAR(50)` 컬럼에 50자 초과 데이터 입력 시 "입력 가능한 길이를 초과했습니다" 에러.<br>- **[검증 실패]** 숫자만 입력 가능한 필드(`INT`)에 문자 입력 시 유효성 에러. |
 | **FR-011** | **데이터** | 조작 | 수정 | **데이터 수정** | - 기존 데이터를 불러와 값을 변경(UPDATE)한다.<br>- **[검증]** PK 컬럼(`SAMPLE_ID` 등)은 수정 불가(`disabled` 또는 `readonly`) 처리되어야 함.<br>- **[검증]** 수정 폼 진입 시 기존 데이터가 Input Field에 올바르게 채워져(Binding) 있어야 함. |
 | **FR-012** | **데이터** | 조작 | 삭제 | **데이터 삭제** | - 특정 Row를 삭제(DELETE)한다.<br>- **[검증]** 삭제 버튼 클릭 시 브라우저 Confirm 창("정말 삭제하시겠습니까?") 출력.<br>- **[결과]** 취소 시 아무런 동작도 하지 않아야 하며, 확인 시 목록에서 해당 행이 즉시 사라져야 함. |
 | **FR-013** | **유틸리티** | SQL | 시각화 | **SQL 미리보기** | - 수행되는 CRUD 작업에 해당하는 실제 SQL 쿼리를 화면에 표시한다.<br>- **[상세]** `INSERT INTO TBL_SAMPLE (DATA_JSON) VALUES ('{"COL": "VAL"}')` 형태가 아니라, 논리적 쿼리 `INSERT INTO [TABLE] ([COL]) VALUES ([VAL])` 형태로 변환하여 보여줄 것.<br>- **[UI]** 쿼리문은 복사(Copy)는 가능하되 수정은 불가능해야 함. |
@@ -90,15 +90,31 @@
 
 | ID | 대분류 | 중분류 | 소분류 | 요구사항 명 | 상세 내용 및 기준 |
 |:---:|:---:|:---:|:---:|:---|:---|
-| ID | 대분류 | 중분류 | 소분류 | 요구사항 명 | 상세 내용 및 기준 |
-|:---:|:---:|:---:|:---:|:---|:---|
-| **NFR-001** | **보안** | 접근제어 | 인증 | **강제 로그인** | - 모든 기능 페이지는 인증된 사용자만 접근 가능하다. 비로그인 접근 시 로그인 페이지로 강제 리다이렉트 처리한다.<br>- **[세션]** 브라우저 종료 시 세션이 유지되지 않도록 설정(필요 시). |
-| **NFR-002** | **보안** | 데이터 | 격리 | **데이터 프라이버시** | - `TBL_META` 조회 및 CRUD 시 반드시 `WHERE USER_ID = ?` 조건을 강제하여, **타 사용자의 테이블에 접근하는 것을 원천 차단**해야 한다.<br>- **[검증]** URL 파라미터 조작(`?tblId=다른사람거`)을 통한 접근 시도 시 `403 Forbidden` 또는 "접근 권한이 없습니다" 에러 발생. |
-| **NFR-003** | **보안** | 웹 | 방어 | **XSS/CSRF** | - 게시글 내용 등 사용자 입력값에 스크립트(`script`) 태그가 포함될 경우 이스케이프 처리하여 XSS 공격을 방지한다. |
-| **NFR-004** | **사용성** | UX | 피드백 | **명확한 피드백** | - 데이터 저장/수정/삭제 등 상태 변경 작업 시 **Toast 팝업 혹은 Alert**로 성공/실패 여부를 명확히 사용자에게 인지시켜야 한다.<br>- **[로딩]** 데이터 조회나 처리 시간이 1초 이상 소요될 경우 로딩 인디케이터(Spinner)를 표시한다. |
-| **NFR-005** | **사용성** | UX | 에러 | **Friendly Error** | - DB 에러(`ConstraintViolation` 등) 발생 시, 영문 스택 트레이스 대신 "이미 사용 중인 값입니다"와 같은 **한글 안내 메시지**를 출력한다.<br>- `500 Internal Server Error` 발생 시 사용자 친화적인 에러 페이지(`error/500`)를 제공한다. |
-| **NFR-006** | **성능** | 데이터 | 구조 | **JSON Parsing** | - `TBL_SAMPLE` 조회 시 JSON 파싱 및 DTO 매핑 속도가 **2초 이내**에 완료되어야 한다 (데이터 100건 기준). |
-| **NFR-007** | **호환성** | 웹 | 브라우저 | **크로스 브라우징** | - Chrome, Edge, Safari 최신 버전에서 기능 및 UI가 깨짐 없이 정상 동작해야 한다.<br>- 모바일 환경에서도 테이블이 화면을 벗어나지 않도록 **반응형(CSS Media Query)** 처리가 고려되어야 한다. |
+### 3.2 비기능 요구사항 (Non-Functional Requirements)
+
+시스템 품질, 보안, 운영 환경 등 기능 외적인 제약 사항을 상세히 기술합니다.
+
+#### 1. 보안 (Security)
+| ID | 분류 | 요구사항 명 | 상세 내용 및 기준 |
+|:---:|:---:|:---|:---|
+| **NFR-101** | **인증/인가** | **강제 권한 제어** | - 모든 컨트롤러는 인터셉터(`HandlerInterceptor`) 또는 필터를 통해 로그인 여부를 선행 검사해야 한다.<br>- **[기준]** 비로그인 사용자의 요청은 즉시 `401 Unauthorized` 또는 로그인 페이지 리다이렉트로 처리하며, 어떠한 DB 조회도 수행해서는 안 된다. |
+| **NFR-102** | **데이터** | **접근 격리 (Isolation)** | - 모든 SQL 쿼리의 `WHERE` 절에는 `USER_ID`가 필수적으로 포함되어야 한다.<br>- **[기준]** URL 파라미터 변조(`?tblId=100`)를 통해 타인의 리소스에 접근 시도시, 애플리케이션 레벨에서 이를 감지하고 `403 Forbidden` 에러를 발생시켜야 한다. |
+| **NFR-103** | **공격 방어** | **SQL Injection / XSS** | - MyBatis의 `#{param}` 바인딩을 사용하여 SQL Injection을 원천 차단해야 한다 (String Concatenation 금지).<br>- 사용자 입력값(테이블명, 데이터 등)에 스크립트 태그 포함 시 HTML Entity(`&lt;`)로 변환하여 저장하거나 출력 시 이스케이핑 처리해야 한다. |
+| **NFR-104** | **세션** | **세션 보안** | - 세션 쿠키(`JSESSIONID`)는 `HttpOnly` 속성을 설정하여 자바스크립트에서의 접근을 방지해야 한다.<br>- 세션 타임아웃은 30분으로 설정하며, 활동 감지 시 자동 연장된다. |
+
+#### 2. 사용성 및 UI/UX (Usability)
+| ID | 분류 | 요구사항 명 | 상세 내용 및 기준 |
+|:---:|:---:|:---|:---|
+| **NFR-201** | **피드백** | **시스템 피드백** | - 데이터 처리(저장/수정/삭제) 성공 시 **"저장되었습니다"**와 같은 Toast 알림 또는 Alert 창을 3초간 노출 후 사라지게 한다.<br>- **[오류]** 처리 실패 시 "알 수 없는 오류가 발생했습니다" 대신, "입력 값이 너무 깁니다(50자 제한)"와 같이 **원인을 알 수 있는 메시지**를 제공해야 한다. |
+| **NFR-202** | **반응형** | **모바일 호환성** | - 데스크탑(1920px), 태블릿(768px), 모바일(360px) 해상도에서 레이아웃 깨짐이 없어야 한다.<br>- **[기준]** 모바일 환경에서는 사이드바가 햄버거 메뉴(Drawer) 형태로 변환되거나 상단으로 이동해야 한다. |
+| **NFR-203** | **디자인** | **Empty State** | - 초기 데이터가 하나도 없을 때 단순히 빈 화면을 보여주는 대신, **"첫 번째 테이블을 만들어보세요!"** 와 같은 유도 문구와 생성 버튼(CTA)을 중앙에 배치해야 한다. |
+
+#### 3. 성능 및 안정성 (Performance & Reliability)
+| ID | 분류 | 요구사항 명 | 상세 내용 및 기준 |
+|:---:|:---:|:---|:---|
+| **NFR-301** | **응답 속도** | **Latency 목표** | - 일반적인 목록 조회 및 CRUD 작업은 **200ms** 이내에 서버 처리가 완료되어야 한다.<br>- 메타데이터 + JSON 결합 과정이 포함된 복잡한 조회도 **500ms**를 넘지 않도록 최적화한다. |
+| **NFR-302** | **예외 처리** | **Global Exception** | - 예기치 않은 서버 에러(NPE 등) 발생 시 사용자에게 **Stack Trace를 그대로 노출하는 것을 엄격히 금지**한다.<br>- 대신 `error/500.html`과 같은 친절한 에러 페이지로 안내하고, 실제 로그는 서버 파일에 기록해야 한다. |
+| **NFR-303** | **DB** | **트랜잭션 관리** | - 메타 정보 수정과 데이터 수정이 동시에 일어나는 로직의 경우, `@Transactional`을 사용하여 원자성(Atomicity)을 보장해야 한다.<br>- 중간에 에러 발생 시 모든 변경사항은 롤백(Rollback)되어야 한다. |
 
 ### 제한 사항
 - **SQL 직접 입력 불가**: 사용자가 임의의 SQL을 작성하여 실행할 수 없다.
@@ -184,9 +200,15 @@ erDiagram
         INT COL_ID PK "컬럼 ID"
         INT TBL_ID FK "테이블 ID"
         VARCHAR COL_NM "컬럼명"
-        VARCHAR DATA_TYPE "데이터 타입"
+        INT TYPE_ID FK "데이터 타입 ID"
+        INT TYPE_LENGTH "데이터 길이"
         CHAR NULLABLE "NULL 허용 여부"
         INT ORDER_NO "정렬 순서"
+    }
+
+    DATA_TYPES {
+        INT TYPE_ID PK "타입 ID"
+        VARCHAR TYPE_NM "타입명 (INT, VARCHAR..)"
     }
 
     TBL_SAMPLE {
@@ -201,12 +223,24 @@ erDiagram
     USERS ||--|{ TBL_META : "owns"
     TBL_META ||--|{ COL_META : "defines columns for"
     TBL_META ||--|{ TBL_SAMPLE : "contains data for"
+    DATA_TYPES ||--|{ COL_META : "defines type of"
 ```
 
 ### 3.3 DDL (Data Definition Language)
 
 ```sql
+-- =========================================
+-- Drop Tables (Reset Schema)
+-- =========================================
+DROP TABLE IF EXISTS TBL_SAMPLE;
+DROP TABLE IF EXISTS COL_META;
+DROP TABLE IF EXISTS TBL_META;
+DROP TABLE IF EXISTS DATA_TYPES;
+DROP TABLE IF EXISTS USERS;
+
+-- =========================================
 -- 1. Users Table
+-- =========================================
 CREATE TABLE USERS (
     USER_ID INT AUTO_INCREMENT PRIMARY KEY COMMENT '사용자 고유 ID',
     USER_NM VARCHAR(50) NOT NULL COMMENT '사용자 이름',
@@ -218,7 +252,16 @@ CREATE TABLE USERS (
     CONSTRAINT CK_USERS_EMAIL CHECK (EMAIL LIKE '%@%')
 ) ENGINE = InnoDB COMMENT = '사용자 테이블';
 
--- 2. Tables Metadata
+-- 2. Data Types Table
+CREATE TABLE DATA_TYPES (
+    TYPE_ID INT AUTO_INCREMENT PRIMARY KEY COMMENT '타입 고유 ID',
+    TYPE_NM VARCHAR(50) NOT NULL UNIQUE COMMENT '데이터 타입 명',
+    REG_DT TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '등록일자'
+) ENGINE = InnoDB COMMENT = '지원하는 DB 데이터 타입 정의';
+
+INSERT INTO DATA_TYPES (TYPE_NM) VALUES ('INT'), ('VARCHAR'), ('TEXT'), ('DATE');
+
+-- 3. Tables Metadata
 CREATE TABLE TBL_META (
     TBL_ID INT AUTO_INCREMENT PRIMARY KEY COMMENT '테이블 고유 ID',
     TBL_NM VARCHAR(50) NOT NULL COMMENT '테이블 이름',
@@ -228,20 +271,22 @@ CREATE TABLE TBL_META (
     CONSTRAINT TBL_META_FK1 FOREIGN KEY (USER_ID) REFERENCES USERS (USER_ID) ON DELETE CASCADE
 ) ENGINE = InnoDB COMMENT = '테이블 메타 데이터';
 
--- 3. Columns Metadata
+-- 4. Columns Metadata
 CREATE TABLE COL_META (
     COL_ID INT AUTO_INCREMENT PRIMARY KEY COMMENT '컬럼 고유 ID',
     TBL_ID INT NOT NULL COMMENT '테이블 ID(FK)',
     COL_NM VARCHAR(50) NOT NULL COMMENT '컬럼 이름',
-    DATA_TYPE VARCHAR(50) NOT NULL COMMENT '데이터 타입',
+    TYPE_ID INT NOT NULL COMMENT '데이터 타입 ID(FK)',
+    TYPE_LENGTH INT DEFAULT 0 COMMENT '데이터 길이 (VARCHAR 등)',
     NULLABLE CHAR(1) DEFAULT 'Y' COMMENT 'NULL 허용 여부 (Y/N)',
     ORDER_NO INT DEFAULT 0 COMMENT '컬럼 순서',
     REG_DT TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '등록일자',
     CONSTRAINT CK_COL_META_NULLABLE CHECK (NULLABLE IN ('Y', 'N')),
-    CONSTRAINT COL_META_FK1 FOREIGN KEY (TBL_ID) REFERENCES TBL_META (TBL_ID) ON DELETE CASCADE
+    CONSTRAINT COL_META_FK1 FOREIGN KEY (TBL_ID) REFERENCES TBL_META (TBL_ID) ON DELETE CASCADE,
+    CONSTRAINT COL_META_FK2 FOREIGN KEY (TYPE_ID) REFERENCES DATA_TYPES (TYPE_ID) ON DELETE RESTRICT
 ) ENGINE = InnoDB COMMENT = '컬럼 메타 데이터';
 
--- 4. Sample Data Table
+-- 5. Sample Data Table
 CREATE TABLE TBL_SAMPLE (
     SAMPLE_ID INT AUTO_INCREMENT PRIMARY KEY COMMENT '데이터 고유 ID',
     TBL_ID INT NOT NULL COMMENT '테이블 ID(FK)',
@@ -261,8 +306,9 @@ CREATE INDEX IDX_USERS_EMAIL ON USERS (EMAIL);
 | 테이블 명 | 역할 설명 | 비고 |
 |:---:|:---|:---|
 | **USERS** | **사용자 관리**<br>로그인 및 권한 처리를 위한 사용자 정보를 저장합니다. | 회원가입/로그인 시 사용됨 |
+| **DATA_TYPES** | **데이터 타입 정의**<br>시스템에서 지원하는 데이터 타입(INT, VARCHAR 등)을 관리합니다. | `COL_META`에서 참조하여 사용 (정규화) |
 | **TBL_META** | **테이블 메타 정보**<br>사용자가 생성/관리하는 가상의 '테이블' 자체에 대한 정보(이름, 설명)를 정의합니다. | 시스템이 관리하는 '테이블 목록'의 원천 데이터 |
-| **COL_META** | **컬럼 메타 정보**<br>각 메타 테이블(`TBL_META`)에 속한 컬럼들의 구조(이름, 타입, 제약조건 등)를 정의합니다. | 동적 폼 생성 및 유효성 검사에 활용 |
+| **COL_META** | **컬럼 메타 정보**<br>각 테이블의 컬럼 구조를 정의하며, `DATA_TYPES`를 참조하여 타입을 지정합니다. | 동적 폼 생성 및 유효성 검사에 활용 |
 | **TBL_SAMPLE** | **실제 데이터 저장소**<br>사용자가 입력한 데이터를 JSON 형태로 유연하게 저장합니다. | **Physical Schema-less 구현**<br>동적인 컬럼 구조를 수용하기 위해 `DATA_JSON`에 Key-Value 형태로 값을 저장함. |
 
 > **💡 설계 의도 (Why JSON?)**
