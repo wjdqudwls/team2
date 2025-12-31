@@ -51,27 +51,30 @@
 개발자가 시스템을 통해 어떤 기능을 수행할 수 있는지 보여주는 다이어그램입니다.
 
 ```mermaid
-usecaseDiagram
-    actor "Developer" as U
-    package "DB Buddy System" {
-        usecase "테이블 목록 조회" as UC1
-        usecase "테이블 상세(컬럼) 확인" as UC2
-        usecase "데이터 조회 (SELECT)" as UC3
-        usecase "데이터 추가 (INSERT)" as UC4
-        usecase "데이터 수정 (UPDATE)" as UC5
-        usecase "데이터 삭제 (DELETE)" as UC6
-        usecase "SQL 미리보기" as UC7
-    }
-    U --> UC1
-    U --> UC2
-    U --> UC3
-    U --> UC4
-    U --> UC5
-    U --> UC6
-    UC3 ..> UC7 : include
-    UC4 ..> UC7 : include
-    UC5 ..> UC7 : include
-    UC6 ..> UC7 : include
+graph TD
+    User((Developer))
+
+    subgraph "DB Buddy System"
+        UC1[테이블 목록 조회]
+        UC2[테이블 상세(컬럼) 확인]
+        UC3[데이터 조회 (SELECT)]
+        UC4[데이터 추가 (INSERT)]
+        UC5[데이터 수정 (UPDATE)]
+        UC6[데이터 삭제 (DELETE)]
+        UC7[SQL 미리보기]
+    end
+
+    User --> UC1
+    User --> UC2
+    User --> UC3
+    User --> UC4
+    User --> UC5
+    User --> UC6
+
+    UC3 -.->|include| UC7
+    UC4 -.->|include| UC7
+    UC5 -.->|include| UC7
+    UC6 -.->|include| UC7
 ```
 
 ### 3.2 ERD (Entity Relationship Diagram)
